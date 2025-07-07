@@ -8,9 +8,10 @@ pipeline {
             }
         }
 
-        stage('Build') {
+        stage('Docker Build') {
             steps {
-                echo '🚧 Bu yerda docker build yoki test bo‘lishi mumkin.'
+                echo '🚧 Docker image build qilinmoqda...'
+                sh 'docker build -t myapp-image .'
             }
         }
     }
