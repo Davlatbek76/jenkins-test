@@ -1,26 +1,29 @@
 pipeline {
     agent any
 
-    parameters {
-        string(name: 'IMAGE_TAG', defaultValue: 'latest', description: 'Docker image tag')
-        booleanParam(name: 'DOCKER_BUILD', defaultValue: true, description: 'Docker build qilish kerakmi?')
+    environment {
+        IMAGE_NAME = "easytall/jenkins-test"  // o'zingizning DockerHub username/repo
+        IMAGE_TAG = "latest"                 // versiya: latest, v1.0.0 va h.k.
+        DOCKER_CREDENTIALS_ID = "dockerhub"  // Credential ID Jenkinsda
     }
 
     stages {
-        stage('Show Params') {
+        stage('Docker Build') {
             steps {
-                echo "✅ Siz kiritgan IMAGE_TAG: ${params.IMAGE_TAG}"
-                echo "🔁 Docker build qilish: ${params.DOCKER_BUILD}"
+                echo "🚧 Docker image build qilinmoqda..."
+                sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
             }
         }
 
-        stage('Docker Build') {
-            when {
-                expression { return params.DOCKER_BUILD == true }
-            }
+        stage('Docker Push') {
             steps {
-                echo '🚧 Docker image build qilinmoqda...'
-                sh "docker build -t myapp-image:${params.IMAGE_TAG} ."
+                echo "📤 DockerHub’ga push qilinmoqda..."
+                withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS_ID}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh '''
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        docker push ${IMAGE_NAME}:${IMAGE_TAG}
+                    '''
+                }
             }
         }
     }
